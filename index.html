@@ -1,0 +1,399 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FoundIt | Lost & Found Portal</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <!-- NAVIGATION -->
+  <header class="navbar">
+    <a href="#" class="brand" id="homeLogo">
+      <span class="brand-icon">F</span>
+      <span>Found<span class="brand-highlight">It</span></span>
+    </a>
+
+    <nav class="nav-links">
+      <button class="nav-link active" id="homeButton">Home</button>
+      <button class="nav-link" id="lostItemsButton">Lost Items</button>
+      <button class="nav-link report-nav-button" id="reportButton">
+        <span>＋</span> Report an Item
+      </button>
+      <button class="nav-link profile-nav-button" id="profileButton">
+        <span class="nav-avatar" id="navAvatar">P</span>
+        Profile
+      </button>
+    </nav>
+
+    <button class="mobile-menu-button" id="mobileMenuButton"
+      aria-label="Toggle navigation" aria-expanded="false">☰</button>
+  </header>
+
+  <!-- HOME PAGE -->
+  <main id="homePage">
+
+    <section class="hero">
+      <div class="hero-content">
+        <span class="eyebrow">A COMMUNITY THAT CARES</span>
+        <h1>Lost something?<br><span>Let's find it together.</span></h1>
+        <p>
+          Every lost item has a story. Help reunite people with the
+          things that matter, one discovery at a time.
+        </p>
+
+        <div class="hero-actions">
+          <button class="button button-gold" id="heroReportButton">
+            + Report a Lost Item
+          </button>
+          <button class="button button-outline" id="heroExploreButton">
+            Explore Items ↓
+          </button>
+        </div>
+
+        <div class="hero-note">
+          <span class="note-dot"></span>
+          Built on community, trust and helping hands.
+        </div>
+      </div>
+    </section>
+
+    <!-- ITEMS ARE DISPLAYED ON THE HOME PAGE -->
+    <section class="items-section" id="itemsSection">
+      <div class="section-heading">
+        <div>
+          <span class="eyebrow dark-eyebrow">THE COMMUNITY BOARD</span>
+          <h2>Recently Reported Items</h2>
+          <p>Browse reports and help an item find its way home.</p>
+        </div>
+        <button class="button button-green" id="sectionReportButton">
+          + Report an Item
+        </button>
+      </div>
+
+      <div class="search-panel">
+        <div class="search-input-wrap">
+          <span>⌕</span>
+          <input type="search" id="searchInput"
+            placeholder="Search items, locations or descriptions..."
+            aria-label="Search reported items">
+        </div>
+
+        <select id="categoryFilter" aria-label="Filter by category">
+          <option value="all">All categories</option>
+          <option value="Electronics">Electronics</option>
+          <option value="Documents">Documents</option>
+          <option value="Bags">Bags</option>
+          <option value="Keys">Keys</option>
+          <option value="Accessories">Accessories</option>
+          <option value="Clothing">Clothing</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+
+      <div class="results-line">
+        <span id="resultsCount">0 items</span>
+        <span>Community reports</span>
+      </div>
+
+      <div class="items-grid" id="itemsGrid"></div>
+
+      <div class="empty-state" id="emptyState" hidden>
+        <div class="empty-icon">⌕</div>
+        <h3>No items found</h3>
+        <p>Try another search or report a lost item to get started.</p>
+        <button class="button button-green" id="emptyReportButton">
+          Report an Item
+        </button>
+      </div>
+    </section>
+
+    <section class="help-banner">
+      <div>
+        <span class="eyebrow">SMALL ACTS, BIG DIFFERENCE</span>
+        <h2>Found something that isn't yours?</h2>
+        <p>Report it so its owner has a chance to get it back.</p>
+      </div>
+      <button class="button button-gold" id="foundReportButton">
+        Share a Found Item
+      </button>
+    </section>
+  </main>
+
+  <!-- REPORT PAGE: HIDDEN UNTIL REPORT BUTTON IS CLICKED -->
+  <main id="reportPage" class="inner-page" hidden>
+    <div class="page-top">
+      <button class="back-button" id="reportBackButton">← Back to Home</button>
+      <span class="eyebrow dark-eyebrow">COMMUNITY CONTRIBUTION</span>
+      <h1>Report an Item</h1>
+      <p>Give the community the details needed to help reunite an item with its owner.</p>
+    </div>
+
+    <form id="reportForm" class="form-card" novalidate>
+      <div class="form-section-title">
+        <span class="form-step">01</span>
+        <div>
+          <h2>Item details</h2>
+          <p>Tell us what was lost or found.</p>
+        </div>
+      </div>
+
+      <div class="form-grid">
+        <div class="form-field full-width">
+          <label for="itemTitle">Item name <span>*</span></label>
+          <input id="itemTitle" name="itemTitle" type="text"
+            placeholder="e.g. Black Samsung phone" maxlength="80" required>
+          <small class="field-error" id="itemTitleError"></small>
+        </div>
+
+        <div class="form-field">
+          <label for="itemStatus">Report type <span>*</span></label>
+          <select id="itemStatus" name="itemStatus" required>
+            <option value="Lost">I lost this item</option>
+            <option value="Found">I found this item</option>
+          </select>
+        </div>
+
+        <div class="form-field">
+          <label for="itemCategory">Category <span>*</span></label>
+          <select id="itemCategory" name="itemCategory" required>
+            <option value="">Choose category</option>
+            <option>Electronics</option>
+            <option>Documents</option>
+            <option>Bags</option>
+            <option>Keys</option>
+            <option>Accessories</option>
+            <option>Clothing</option>
+            <option>Other</option>
+          </select>
+          <small class="field-error" id="itemCategoryError"></small>
+        </div>
+
+        <div class="form-field full-width">
+          <label for="itemDescription">Description <span>*</span></label>
+          <textarea id="itemDescription" name="itemDescription" rows="4"
+            maxlength="800" placeholder="Describe the item, its colour, brand or identifying details..."
+            required></textarea>
+          <small class="field-error" id="itemDescriptionError"></small>
+        </div>
+
+        <div class="form-field">
+          <label for="itemLocation">Location <span>*</span></label>
+          <input id="itemLocation" name="itemLocation" type="text"
+            maxlength="300" placeholder="Where was it lost or found?" required>
+          <small class="field-error" id="itemLocationError"></small>
+        </div>
+
+        <div class="form-field">
+          <label for="itemDate">Date <span>*</span></label>
+          <input id="itemDate" name="itemDate" type="date" required>
+          <small class="field-error" id="itemDateError"></small>
+        </div>
+
+        <div class="form-field full-width">
+          <label for="itemPhoto">Item photo</label>
+          <label for="itemPhoto" class="upload-box" id="uploadBox">
+            <span class="upload-icon">↑</span>
+            <strong>Choose an image</strong>
+            <span>JPG, PNG or WEBP · Maximum 5 MB</span>
+            <span id="photoFileName">No image selected</span>
+          </label>
+          <input id="itemPhoto" name="itemPhoto" type="file"
+            accept="image/jpeg,image/png,image/webp" hidden>
+          <div class="photo-preview-wrap" id="photoPreviewWrap" hidden>
+            <img id="photoPreview" alt="Selected item preview">
+            <button type="button" class="text-button" id="removePhotoButton">
+              Remove photo
+            </button>
+          </div>
+          <small class="field-error" id="itemPhotoError"></small>
+        </div>
+      </div>
+
+      <div class="form-divider"></div>
+
+      <div class="form-section-title">
+        <span class="form-step">02</span>
+        <div>
+          <h2>Your contact details</h2>
+          <p>Help the owner contact you about the item.</p>
+        </div>
+      </div>
+
+      <div class="form-grid">
+        <div class="form-field">
+          <label for="reporterName">Your name <span>*</span></label>
+          <input id="reporterName" name="reporterName" type="text"
+            maxlength="80" placeholder="Full name" required>
+          <small class="field-error" id="reporterNameError"></small>
+        </div>
+
+        <div class="form-field">
+          <label for="reporterMobile">Mobile number <span>*</span></label>
+          <input id="reporterMobile" name="reporterMobile" type="tel"
+            inputmode="numeric" maxlength="10" placeholder="10-digit mobile number" required>
+          <small class="field-error" id="reporterMobileError"></small>
+        </div>
+
+        <div class="form-field full-width">
+          <label for="reporterEmail">Email address <span>*</span></label>
+          <input id="reporterEmail" name="reporterEmail" type="email"
+            maxlength="120" placeholder="you@example.com" required>
+          <small class="field-error" id="reporterEmailError"></small>
+        </div>
+      </div>
+
+      <p class="privacy-note">
+        Note: This demo displays the mobile number on item cards.
+        Avoid posting sensitive personal information.
+      </p>
+
+      <div class="form-actions">
+        <button type="button" class="button button-light" id="cancelReportButton">
+          Cancel
+        </button>
+        <button type="submit" class="button button-green" id="submitReportButton">
+          Publish Report →
+        </button>
+      </div>
+    </form>
+  </main>
+
+  <!-- PROFILE PAGE: HIDDEN UNTIL PROFILE BUTTON IS CLICKED -->
+  <main id="profilePage" class="inner-page" hidden>
+    <div class="page-top">
+      <button class="back-button" id="profileBackButton">← Back to Home</button>
+      <span class="eyebrow dark-eyebrow">YOUR ACCOUNT</span>
+      <h1>My Profile</h1>
+      <p>Manage your details and review the items you have reported.</p>
+    </div>
+
+    <section class="profile-card">
+      <div class="profile-card-top">
+        <div class="profile-avatar-area">
+          <button type="button" class="profile-avatar" id="profileAvatar"
+            aria-label="Change profile photo">P</button>
+          <input type="file" id="avatarInput" accept="image/jpeg,image/png,image/webp" hidden>
+          <div>
+            <h2 id="profileDisplayName">Your Name</h2>
+            <p id="profileDisplayEmail">Add your email address</p>
+            <button class="text-button" type="button" id="changeAvatarButton">
+              Change photo
+            </button>
+            <button class="text-button danger-text" type="button" id="removeAvatarButton">
+              Remove photo
+            </button>
+          </div>
+        </div>
+        <button class="button button-light edit-button" id="editProfileButton" type="button">
+          ✎ Edit
+        </button>
+      </div>
+
+      <div class="profile-details" id="profileDetails">
+        <div class="detail-item">
+          <span>Full name</span>
+          <strong id="detailName">Not added</strong>
+        </div>
+        <div class="detail-item">
+          <span>Email address</span>
+          <strong id="detailEmail">Not added</strong>
+        </div>
+        <div class="detail-item">
+          <span>Mobile number</span>
+          <strong id="detailMobile">Not added</strong>
+        </div>
+        <div class="detail-item">
+          <span>City / Location</span>
+          <strong id="detailLocation">Not added</strong>
+        </div>
+      </div>
+
+      <form id="profileForm" class="profile-edit-form" hidden novalidate>
+        <div class="form-grid">
+          <div class="form-field">
+            <label for="profileName">Full name <span>*</span></label>
+            <input id="profileName" type="text" maxlength="80" required>
+            <small class="field-error" id="profileNameError"></small>
+          </div>
+          <div class="form-field">
+            <label for="profileEmail">Email address <span>*</span></label>
+            <input id="profileEmail" type="email" maxlength="120" required>
+            <small class="field-error" id="profileEmailError"></small>
+          </div>
+          <div class="form-field">
+            <label for="profileMobile">Mobile number <span>*</span></label>
+            <input id="profileMobile" type="tel" inputmode="numeric"
+              maxlength="10" required>
+            <small class="field-error" id="profileMobileError"></small>
+          </div>
+          <div class="form-field">
+            <label for="profileLocation">City / Location</label>
+            <input id="profileLocation" type="text" maxlength="300"
+              placeholder="Your city">
+          </div>
+        </div>
+        <div class="form-actions">
+          <button type="button" class="button button-light" id="cancelProfileButton">
+            Cancel
+          </button>
+          <button type="submit" class="button button-green">
+            Save Profile
+          </button>
+        </div>
+      </form>
+    </section>
+
+    <section class="my-reports-section">
+      <div class="section-heading">
+        <div>
+          <span class="eyebrow dark-eyebrow">YOUR CONTRIBUTION</span>
+          <h2>My Reports</h2>
+          <p>Reports created on this browser.</p>
+        </div>
+      </div>
+      <div class="items-grid" id="myReportsGrid"></div>
+      <p class="muted-message" id="noMyReports">You haven't reported any items yet.</p>
+    </section>
+  </main>
+
+  <!-- CHAT MODAL: LOCAL DEMO ONLY -->
+  <div class="modal-backdrop" id="chatModal" hidden>
+    <section class="chat-modal" role="dialog" aria-modal="true"
+      aria-labelledby="chatTitle">
+      <div class="chat-header">
+        <div>
+          <span class="eyebrow dark-eyebrow">COMMUNITY CHAT</span>
+          <h2 id="chatTitle">Message reporter</h2>
+          <p id="chatItemName"></p>
+        </div>
+        <button class="icon-button" id="closeChatButton" aria-label="Close chat">×</button>
+      </div>
+      <div class="chat-messages" id="chatMessages"></div>
+      <form class="chat-compose" id="chatForm">
+        <input type="text" id="chatMessageInput" maxlength="500"
+          placeholder="Write a message..." required>
+        <button class="button button-green" type="submit">Send</button>
+      </form>
+    </section>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <footer class="footer">
+    <a href="#" class="brand footer-brand" id="footerHomeButton">
+      <span class="brand-icon">F</span>
+      <span>Found<span class="brand-highlight">It</span></span>
+    </a>
+    <p>Helping lost things find their way home.</p>
+    <span>© 2026 FoundIt. Community-powered lost & found.</span>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
