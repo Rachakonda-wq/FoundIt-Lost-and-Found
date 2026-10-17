@@ -1,5 +1,13 @@
 "use strict";
 
+/*
+  FoundIt - Lost & Found Portal
+
+  Sample reports are public static data and appear for every visitor.
+  New reports, profiles, avatars and demo chats are stored in localStorage.
+  A shared database is required to share newly submitted reports between users.
+*/
+
 const STORAGE_KEYS = {
   items: "foundit_items_v1",
   profile: "foundit_profile_v1",
@@ -9,26 +17,100 @@ const STORAGE_KEYS = {
 
 const $ = (selector) => document.querySelector(selector);
 
-const pages = {
-  home: $("#homePage"),
-  report: $("#reportPage"),
-  profile: $("#profilePage")
-};
+/* PUBLIC SAMPLE REPORTS */
 
-let items = readStorage(STORAGE_KEYS.items, []);
-let profile = readStorage(STORAGE_KEYS.profile, {
-  name: "",
-  email: "",
-  mobile: "",
-  location: ""
-});
-let avatarData = readStorage(STORAGE_KEYS.avatar, "");
-let chats = readStorage(STORAGE_KEYS.chats, {});
-let selectedPhoto = "";
-let selectedPhotoName = "";
-let editingItemId = null;
-let activeChatItemId = null;
-let toastTimeout = null;
+const SAMPLE_ITEMS = [
+  {
+    id: "sample-keys",
+    title: "Car Keys",
+    status: "Lost",
+    category: "Other",
+    description: "Car keys reported near the airport parking area.",
+    location: "Airport Parking, New Delhi",
+    date: "2026-10-15",
+    photo: "images/lost_car_keys.jpg",
+    photoName: "lost_car_keys.jpg",
+    reporterName: "Giri",
+    reporterMobile: "7893256974",
+    reporterEmail: "giri@example.com",
+    createdAt: "2026-10-15T09:00:00.000Z"
+  },
+  {
+    id: "sample-wallet",
+    title: "Wallet",
+    status: "Found",
+    category: "Accessories",
+    description: "A wallet reported near the shopping area.",
+    location: "Galleries Lafayette, Mumbai",
+    date: "2026-10-14",
+    photo: "images/wallet.jpg",
+    photoName: "wallet.jpg",
+    reporterName: "Sharma",
+    reporterMobile: "9033345453",
+    reporterEmail: "sharma@example.com",
+    createdAt: "2026-10-14T09:00:00.000Z"
+  },
+  {
+    id: "sample-phone",
+    title: "Redmi Note 15 Mobile",
+    status: "Found",
+    category: "Electronics",
+    description: "A mobile phone reported on the second floor of DSL Virtual Mall.",
+    location: "DSL Virtual Mall, Uppal, Hyderabad",
+    date: "2026-10-12",
+    photo: "images/redminote15.jpg",
+    photoName: "redminote15.jpg",
+    reporterName: "Raju",
+    reporterMobile: "7682946589",
+    reporterEmail: "raju@example.com",
+    createdAt: "2026-10-12T09:00:00.000Z"
+  },
+  {
+    id: "sample-headset",
+    title: "Headset",
+    status: "Lost",
+    category: "Electronics",
+    description: "A headset reported missing near the music auditorium.",
+    location: "Music Auditorium, Hyderabad",
+    date: "2026-10-15",
+    photo: "images/headset.jpg",
+    photoName: "headset.jpg",
+    reporterName: "Harish",
+    reporterMobile: "9876543210",
+    reporterEmail: "harish@example.com",
+    createdAt: "2026-10-15T10:00:00.000Z"
+  },
+  {
+    id: "sample-airpods",
+    title: "AirPods",
+    status: "Found",
+    category: "Other",
+    description: "An AirPods case reported on a city bus.",
+    location: "Kondapur, Hyderabad",
+    date: "2026-10-16",
+    photo: "images/Airpords.jpg",
+    photoName: "Airpods.jpg",
+    reporterName: "RP Singh",
+    reporterMobile: "9876543211",
+    reporterEmail: "rpsingh@example.com",
+    createdAt: "2026-10-16T10:00:00.000Z"
+  },
+  {
+    id: "sample-bag",
+    title: "Bag",
+    status: "Lost",
+    category: "Bags",
+    description: "A bag reported missing in a college area.",
+    location: "Guru Nanak University, Hyderabad",
+    date: "2026-10-16",
+    photo: "images/bag.jpg",
+    photoName: "bag.jpg",
+    reporterName: "Samantha",
+    reporterMobile: "9876543212",
+    reporterEmail: "samantha@example.com",
+    createdAt: "2026-10-16T11:00:00.000Z"
+  }
+];
 
 /* STORAGE */
 
@@ -57,6 +139,7 @@ function makeId() {
   if (window.crypto && typeof window.crypto.randomUUID === "function") {
     return window.crypto.randomUUID();
   }
+
   return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
 
@@ -70,14 +153,57 @@ function escapeHtml(value) {
   })[character]);
 }
 
+/*
+  Load the public samples first, then add locally saved reports.
+  Prevent duplicate sample entries if the browser has old saved data.
+*/
+
+const savedItems = readStorage(STORAGE_KEYS.items, []);
+
+let items = [
+  ...SAMPLE_ITEMS,
+  ...(Array.isArray(savedItems)
+    ? savedItems.filter(
+        (item) => !String(item.id || "").startsWith("sample-")
+      )
+    : [])
+];
+
+let profile = readStorage(STORAGE_KEYS.profile, {
+  name: "",
+  email: "",
+  mobile: "",
+  location: ""
+});
+
+let avatarData = readStorage(STORAGE_KEYS.avatar, "");
+let chats = readStorage(STORAGE_KEYS.chats, {});
+
+let selectedPhoto = "";
+let selectedPhotoName = "";
+let editingItemId = null;
+let activeChatItemId = null;
+let toastTimeout = null;
+
+/* PAGE ELEMENTS */
+
+const pages = {
+  home: $("#homePage"),
+  report: $("#reportPage"),
+  profile: $("#profilePage")
+};
+
 /* TOAST */
 
 function showToast(message) {
   const toast = $("#toast");
+  if (!toast) return;
+
   toast.textContent = message;
   toast.classList.add("show");
 
   window.clearTimeout(toastTimeout);
+
   toastTimeout = window.setTimeout(() => {
     toast.classList.remove("show");
   }, 3000);
@@ -86,15 +212,17 @@ function showToast(message) {
 /* PAGE NAVIGATION */
 
 function setActiveNav(page) {
-  $("#homeButton").classList.toggle("active", page === "home");
-  $("#lostItemsButton").classList.toggle("active", page === "home");
-  $("#reportButton").classList.toggle("active", page === "report");
-  $("#profileButton").classList.toggle("active", page === "profile");
+  $("#homeButton")?.classList.toggle("active", page === "home");
+  $("#lostItemsButton")?.classList.toggle("active", page === "home");
+  $("#reportButton")?.classList.toggle("active", page === "report");
+  $("#profileButton")?.classList.toggle("active", page === "profile");
 }
 
 function showPage(pageName, scrollToTop = true) {
   Object.entries(pages).forEach(([name, element]) => {
-    element.hidden = name !== pageName;
+    if (element) {
+      element.hidden = name !== pageName;
+    }
   });
 
   setActiveNav(pageName);
@@ -116,58 +244,80 @@ function showPage(pageName, scrollToTop = true) {
 
 function openReportPage() {
   resetReportForm();
+
   $("#reporterName").value = profile.name || "";
   $("#reporterMobile").value = profile.mobile || "";
   $("#reporterEmail").value = profile.email || "";
+
   showPage("report");
 }
 
 function closeMobileMenu() {
   $("#navLinks")?.classList.remove("open");
-  $("#mobileMenuButton").setAttribute("aria-expanded", "false");
+  $("#mobileMenuButton")?.setAttribute("aria-expanded", "false");
 }
 
 function toggleMobileMenu() {
   const nav = $(".nav-links");
+  if (!nav) return;
+
   const isOpen = nav.classList.toggle("open");
-  $("#mobileMenuButton").setAttribute("aria-expanded", String(isOpen));
+
+  $("#mobileMenuButton")?.setAttribute(
+    "aria-expanded",
+    String(isOpen)
+  );
 }
 
-$("#homeLogo").addEventListener("click", (event) => {
+/* NAVIGATION EVENTS */
+
+$("#homeLogo")?.addEventListener("click", (event) => {
   event.preventDefault();
   showPage("home");
 });
 
-$("#footerHomeButton").addEventListener("click", (event) => {
+$("#footerHomeButton")?.addEventListener("click", (event) => {
   event.preventDefault();
   showPage("home");
 });
 
-$("#homeButton").addEventListener("click", () => showPage("home"));
-
-$("#lostItemsButton").addEventListener("click", () => {
-  showPage("home", false);
-  $("#itemsSection").scrollIntoView({ behavior: "smooth" });
+$("#homeButton")?.addEventListener("click", () => {
+  showPage("home");
 });
 
-$("#reportButton").addEventListener("click", openReportPage);
-$("#heroReportButton").addEventListener("click", openReportPage);
-$("#sectionReportButton").addEventListener("click", openReportPage);
-$("#foundReportButton").addEventListener("click", openReportPage);
-$("#emptyReportButton").addEventListener("click", openReportPage);
-
-$("#profileButton").addEventListener("click", () => showPage("profile"));
-
-$("#heroExploreButton").addEventListener("click", () => {
+$("#lostItemsButton")?.addEventListener("click", () => {
   showPage("home", false);
-  $("#itemsSection").scrollIntoView({ behavior: "smooth" });
+  $("#itemsSection")?.scrollIntoView({ behavior: "smooth" });
 });
 
-$("#reportBackButton").addEventListener("click", () => showPage("home"));
-$("#cancelReportButton").addEventListener("click", () => showPage("home"));
-$("#profileBackButton").addEventListener("click", () => showPage("home"));
+$("#reportButton")?.addEventListener("click", openReportPage);
+$("#heroReportButton")?.addEventListener("click", openReportPage);
+$("#sectionReportButton")?.addEventListener("click", openReportPage);
+$("#foundReportButton")?.addEventListener("click", openReportPage);
+$("#emptyReportButton")?.addEventListener("click", openReportPage);
 
-$("#mobileMenuButton").addEventListener("click", toggleMobileMenu);
+$("#profileButton")?.addEventListener("click", () => {
+  showPage("profile");
+});
+
+$("#heroExploreButton")?.addEventListener("click", () => {
+  showPage("home", false);
+  $("#itemsSection")?.scrollIntoView({ behavior: "smooth" });
+});
+
+$("#reportBackButton")?.addEventListener("click", () => {
+  showPage("home");
+});
+
+$("#cancelReportButton")?.addEventListener("click", () => {
+  showPage("home");
+});
+
+$("#profileBackButton")?.addEventListener("click", () => {
+  showPage("home");
+});
+
+$("#mobileMenuButton")?.addEventListener("click", toggleMobileMenu);
 
 /* VALIDATION HELPERS */
 
@@ -199,7 +349,12 @@ function clearFieldError(inputId, errorId) {
   setError(inputId, errorId, "");
 }
 
-function validateRequiredText(inputId, errorId, label, minimumLength = 1) {
+function validateRequiredText(
+  inputId,
+  errorId,
+  label,
+  minimumLength = 1
+) {
   const value = document.getElementById(inputId).value.trim();
 
   if (value.length < minimumLength) {
@@ -240,41 +395,46 @@ function validateEmail(inputId, errorId) {
 function validateReportForm() {
   const checks = [
     validateRequiredText("itemTitle", "itemTitleError", "Item name", 2),
+
     setError(
       "itemCategory",
       "itemCategoryError",
       $("#itemCategory").value ? "" : "Choose an item category."
     ),
+
     validateRequiredText(
       "itemDescription",
       "itemDescriptionError",
       "Description",
       5
     ),
+
     validateRequiredText(
       "itemLocation",
       "itemLocationError",
       "Location",
       2
     ),
+
     setError(
       "itemDate",
       "itemDateError",
       $("#itemDate").value ? "" : "Choose the date."
     ),
+
     validateRequiredText(
       "reporterName",
       "reporterNameError",
       "Your name",
       2
     ),
+
     validateMobile("reporterMobile", "reporterMobileError"),
     validateEmail("reporterEmail", "reporterEmailError")
   ];
 
   if (checks.includes(false)) {
-    const firstInvalid = $("#reportForm .invalid");
-    firstInvalid?.focus();
+    $("#reportForm .invalid")?.focus();
     return false;
   }
 
@@ -308,10 +468,11 @@ function validateReportForm() {
   });
 });
 
-/* MOBILE NUMBER INPUT: ALLOW ONLY 10 DIGITS */
+/* MOBILE NUMBER INPUT */
 
 ["reporterMobile", "profileMobile"].forEach((id) => {
   const input = document.getElementById(id);
+  if (!input) return;
 
   input.addEventListener("input", () => {
     input.value = input.value.replace(/\D/g, "").slice(0, 10);
@@ -320,37 +481,47 @@ function validateReportForm() {
 
 /* PHOTO UPLOAD AND PREVIEW */
 
-$("#itemPhoto").addEventListener("change", (event) => {
+$("#itemPhoto")?.addEventListener("change", (event) => {
   const file = event.target.files?.[0];
 
   selectedPhoto = "";
   selectedPhotoName = "";
+
   $("#photoPreviewWrap").hidden = true;
   $("#photoPreview").removeAttribute("src");
   $("#photoFileName").textContent = "No image selected";
+
   setError("itemPhoto", "itemPhotoError", "");
 
   if (!file) return;
 
-  const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
+  const allowedTypes = [
+    "image/jpeg",
+    "image/png",
+    "image/webp"
+  ];
 
   if (!allowedTypes.includes(file.type)) {
     event.target.value = "";
+
     setError(
       "itemPhoto",
       "itemPhotoError",
       "Choose a JPG, PNG or WEBP image."
     );
+
     return;
   }
 
   if (file.size > 5 * 1024 * 1024) {
     event.target.value = "";
+
     setError(
       "itemPhoto",
       "itemPhotoError",
       "The image must be 5 MB or smaller."
     );
+
     return;
   }
 
@@ -358,7 +529,11 @@ $("#itemPhoto").addEventListener("change", (event) => {
 
   reader.onload = () => {
     if (typeof reader.result !== "string") {
-      setError("itemPhoto", "itemPhotoError", "Could not read this image.");
+      setError(
+        "itemPhoto",
+        "itemPhotoError",
+        "Could not read this image."
+      );
       return;
     }
 
@@ -371,27 +546,36 @@ $("#itemPhoto").addEventListener("change", (event) => {
   };
 
   reader.onerror = () => {
-    setError("itemPhoto", "itemPhotoError", "Could not read this image.");
+    setError(
+      "itemPhoto",
+      "itemPhotoError",
+      "Could not read this image."
+    );
   };
 
   reader.readAsDataURL(file);
 });
 
-$("#removePhotoButton").addEventListener("click", () => {
+$("#removePhotoButton")?.addEventListener("click", () => {
   selectedPhoto = "";
   selectedPhotoName = "";
+
   $("#itemPhoto").value = "";
   $("#photoPreview").removeAttribute("src");
   $("#photoPreviewWrap").hidden = true;
   $("#photoFileName").textContent = "No image selected";
+
   setError("itemPhoto", "itemPhotoError", "");
 });
 
 function resetReportForm() {
   editingItemId = null;
+
   $("#reportForm").reset();
+
   selectedPhoto = "";
   selectedPhotoName = "";
+
   $("#photoPreview").removeAttribute("src");
   $("#photoPreviewWrap").hidden = true;
   $("#photoFileName").textContent = "No image selected";
@@ -425,23 +609,27 @@ function editReport(id) {
   }
 
   editingItemId = item.id;
+
   $("#itemTitle").value = item.title || "";
   $("#itemStatus").value = item.status || "Lost";
   $("#itemCategory").value = item.category || "";
   $("#itemDescription").value = item.description || "";
   $("#itemLocation").value = item.location || "";
   $("#itemDate").value = item.date || "";
+
   $("#reporterName").value = item.reporterName || "";
   $("#reporterMobile").value = item.reporterMobile || "";
   $("#reporterEmail").value = item.reporterEmail || "";
 
   selectedPhoto = item.photo || "";
   selectedPhotoName = item.photoName || "";
+
   $("#itemPhoto").value = "";
 
   if (selectedPhoto) {
     $("#photoPreview").src = selectedPhoto;
     $("#photoPreviewWrap").hidden = false;
+
     $("#photoFileName").textContent =
       selectedPhotoName || "Current image";
   } else {
@@ -451,12 +639,13 @@ function editReport(id) {
   }
 
   showPage("report");
+
   showToast("Edit the details and submit to save your changes.");
 }
 
 /* SUBMIT A REPORT */
 
-$("#reportForm").addEventListener("submit", (event) => {
+$("#reportForm")?.addEventListener("submit", (event) => {
   event.preventDefault();
 
   if (!validateReportForm()) {
@@ -464,21 +653,27 @@ $("#reportForm").addEventListener("submit", (event) => {
     return;
   }
 
-  const existingItem = items.find((item) => item.id === editingItemId);
+  const existingItem = items.find(
+    (item) => item.id === editingItemId
+  );
 
   const newItem = {
     id: existingItem ? existingItem.id : makeId(),
+
     title: $("#itemTitle").value.trim(),
     status: $("#itemStatus").value,
     category: $("#itemCategory").value,
     description: $("#itemDescription").value.trim(),
     location: $("#itemLocation").value.trim(),
     date: $("#itemDate").value,
+
     photo: selectedPhoto,
     photoName: selectedPhotoName,
+
     reporterName: $("#reporterName").value.trim(),
     reporterMobile: $("#reporterMobile").value.trim(),
     reporterEmail: $("#reporterEmail").value.trim(),
+
     createdAt: existingItem
       ? existingItem.createdAt
       : new Date().toISOString()
@@ -496,6 +691,7 @@ $("#reportForm").addEventListener("submit", (event) => {
   }
 
   items = updatedItems;
+
   const wasEditing = Boolean(existingItem);
 
   profile = {
@@ -511,22 +707,23 @@ $("#reportForm").addEventListener("submit", (event) => {
   renderItems();
   showPage("home");
 
-  $("#itemsSection").scrollIntoView({ behavior: "smooth" });
+  $("#itemsSection")?.scrollIntoView({ behavior: "smooth" });
+
   showToast(
     wasEditing
       ? "Your report has been updated."
-      : "Your report has been published on the Home page."
+      : "Your report has been published on this browser."
   );
 });
 
 /* SEARCH AND FILTER */
 
-$("#searchInput").addEventListener("input", renderItems);
-$("#categoryFilter").addEventListener("change", renderItems);
+$("#searchInput")?.addEventListener("input", renderItems);
+$("#categoryFilter")?.addEventListener("change", renderItems);
 
 function getFilteredItems() {
-  const query = $("#searchInput").value.trim().toLowerCase();
-  const category = $("#categoryFilter").value;
+  const query = ($("#searchInput")?.value || "").trim().toLowerCase();
+  const category = $("#categoryFilter")?.value || "all";
 
   return items.filter((item) => {
     const searchable = [
@@ -539,6 +736,7 @@ function getFilteredItems() {
     ].join(" ").toLowerCase();
 
     const matchesQuery = !query || searchable.includes(query);
+
     const matchesCategory =
       category === "all" || item.category === category;
 
@@ -557,54 +755,73 @@ function renderItemCard(item) {
 
   if (item.photo) {
     const image = document.createElement("img");
+
     image.className = "item-image";
     image.src = item.photo;
-    image.alt = item.title;
+    image.alt = item.title || "Reported item";
     image.loading = "lazy";
 
     image.onerror = () => {
       image.remove();
 
-      const placeholder = document.createElement("div");
-      placeholder.className = "item-image-placeholder";
-      placeholder.textContent = "⌕";
-      placeholder.setAttribute("aria-label", "No item photo available");
-      imageWrap.prepend(placeholder);
+      if (!imageWrap.querySelector(".item-image-placeholder")) {
+        const placeholder = document.createElement("div");
+
+        placeholder.className = "item-image-placeholder";
+        placeholder.textContent = "⌕";
+        placeholder.setAttribute(
+          "aria-label",
+          "No item photo available"
+        );
+
+        imageWrap.prepend(placeholder);
+      }
     };
 
     imageWrap.appendChild(image);
   } else {
     const placeholder = document.createElement("div");
+
     placeholder.className = "item-image-placeholder";
     placeholder.textContent = "⌕";
-    placeholder.setAttribute("aria-label", "No item photo available");
+    placeholder.setAttribute(
+      "aria-label",
+      "No item photo available"
+    );
+
     imageWrap.appendChild(placeholder);
   }
 
   const status = document.createElement("span");
-  status.className = `item-status ${(item.status || "reported").toLowerCase()}`;
+
+  status.className =
+    `item-status ${(item.status || "reported").toLowerCase()}`;
+
   status.textContent = item.status || "Reported";
+
   imageWrap.appendChild(status);
 
   const content = document.createElement("div");
   content.className = "item-card-content";
 
   const category = document.createElement("span");
+
   category.className = "item-category";
-  category.textContent = item.category;
+  category.textContent = item.category || "Other";
 
   const title = document.createElement("h3");
-  title.textContent = item.title;
+  title.textContent = item.title || "Untitled item";
 
   const description = document.createElement("p");
+
   description.className = "item-description";
-  description.textContent = item.description;
+  description.textContent = item.description || "";
 
   const meta = document.createElement("div");
   meta.className = "item-meta";
 
   const location = document.createElement("span");
-  location.textContent = `⌖ ${item.location}`;
+  location.textContent = `⌖ ${item.location || "Location not provided"}`;
 
   const date = document.createElement("span");
   date.textContent = `◷ ${formatDate(item.date)}`;
@@ -615,32 +832,48 @@ function renderItemCard(item) {
   contact.className = "item-card-contact";
 
   const reporter = document.createElement("span");
-  reporter.className = "reporter-name";
-  reporter.textContent = `Reported by ${item.reporterName}`;
 
-  const phone = document.createElement("a");
-  phone.className = "reporter-phone";
-  phone.href = `tel:${item.reporterMobile}`;
-  phone.textContent = `☎ ${item.reporterMobile}`;
+  reporter.className = "reporter-name";
+  reporter.textContent = `Reported by ${item.reporterName || "Anonymous"}`;
+
+  contact.appendChild(reporter);
+
+  if (item.reporterMobile) {
+    const phone = document.createElement("a");
+
+    phone.className = "reporter-phone";
+    phone.href = `tel:${item.reporterMobile}`;
+    phone.textContent = `☎ ${item.reporterMobile}`;
+
+    contact.appendChild(phone);
+  }
 
   const actions = document.createElement("div");
   actions.className = "item-card-actions";
 
   const chatButton = document.createElement("button");
+
   chatButton.type = "button";
   chatButton.className = "button button-green";
   chatButton.textContent = "Chat";
+
   chatButton.addEventListener("click", () => openChat(item));
 
   const locationButton = document.createElement("a");
+
   locationButton.className = "button button-light";
   locationButton.textContent = "View Location";
+
   locationButton.href =
-    `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.location)}`;
+    `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+      item.location || ""
+    )}`;
+
   locationButton.target = "_blank";
   locationButton.rel = "noopener noreferrer";
 
   const editButton = document.createElement("button");
+
   editButton.type = "button";
   editButton.className = "button button-light";
   editButton.textContent = "Edit";
@@ -654,7 +887,9 @@ function renderItemCard(item) {
   editButton.addEventListener("click", () => editReport(item.id));
 
   actions.append(chatButton, locationButton, editButton);
-  contact.append(reporter, phone, actions);
+
+  contact.appendChild(actions);
+
   content.append(category, title, description, meta, contact);
   card.append(imageWrap, content);
 
@@ -663,6 +898,8 @@ function renderItemCard(item) {
 
 function renderItems() {
   const grid = $("#itemsGrid");
+  if (!grid) return;
+
   const filteredItems = getFilteredItems();
 
   grid.replaceChildren();
@@ -671,10 +908,20 @@ function renderItems() {
     grid.appendChild(renderItemCard(item));
   });
 
-  $("#resultsCount").textContent =
-    `${filteredItems.length} ${filteredItems.length === 1 ? "item" : "items"}`;
+  const count = $("#resultsCount");
 
-  $("#emptyState").hidden = filteredItems.length !== 0;
+  if (count) {
+    count.textContent =
+      `${filteredItems.length} ${
+        filteredItems.length === 1 ? "item" : "items"
+      }`;
+  }
+
+  const emptyState = $("#emptyState");
+
+  if (emptyState) {
+    emptyState.hidden = filteredItems.length !== 0;
+  }
 }
 
 function formatDate(dateValue) {
@@ -682,7 +929,9 @@ function formatDate(dateValue) {
 
   const date = new Date(`${dateValue}T00:00:00`);
 
-  if (Number.isNaN(date.getTime())) return "Date not provided";
+  if (Number.isNaN(date.getTime())) {
+    return "Date not provided";
+  }
 
   return date.toLocaleDateString("en-IN", {
     day: "numeric",
@@ -696,6 +945,9 @@ function formatDate(dateValue) {
 function renderAvatar() {
   const profileAvatar = $("#profileAvatar");
   const navAvatar = $("#navAvatar");
+
+  if (!profileAvatar || !navAvatar) return;
+
   const initial = (profile.name || "P").trim().charAt(0).toUpperCase();
 
   profileAvatar.replaceChildren();
@@ -703,10 +955,12 @@ function renderAvatar() {
 
   if (avatarData) {
     const profileImage = document.createElement("img");
+
     profileImage.src = avatarData;
     profileImage.alt = "Profile photo";
 
     const navImage = document.createElement("img");
+
     navImage.src = avatarData;
     navImage.alt = "";
 
@@ -720,6 +974,7 @@ function renderAvatar() {
 
 function renderProfile() {
   $("#profileDisplayName").textContent = profile.name || "Your Name";
+
   $("#profileDisplayEmail").textContent =
     profile.email || "Add your email address";
 
@@ -763,22 +1018,32 @@ function closeProfileEditor() {
   });
 }
 
-$("#editProfileButton").addEventListener("click", openProfileEditor);
+$("#editProfileButton")?.addEventListener("click", openProfileEditor);
 
-$("#cancelProfileButton").addEventListener("click", () => {
+$("#cancelProfileButton")?.addEventListener("click", () => {
   renderProfile();
   closeProfileEditor();
 });
 
-$("#profileForm").addEventListener("submit", (event) => {
+$("#profileForm")?.addEventListener("submit", (event) => {
   event.preventDefault();
 
   const validName = validateRequiredText(
-    "profileName", "profileNameError", "Name", 2
+    "profileName",
+    "profileNameError",
+    "Name",
+    2
   );
 
-  const validEmail = validateEmail("profileEmail", "profileEmailError");
-  const validMobile = validateMobile("profileMobile", "profileMobileError");
+  const validEmail = validateEmail(
+    "profileEmail",
+    "profileEmailError"
+  );
+
+  const validMobile = validateMobile(
+    "profileMobile",
+    "profileMobileError"
+  );
 
   if (!validName || !validEmail || !validMobile) {
     showToast("Please correct the highlighted profile fields.");
@@ -795,6 +1060,7 @@ $("#profileForm").addEventListener("submit", (event) => {
   if (!saveStorage(STORAGE_KEYS.profile, updatedProfile)) return;
 
   profile = updatedProfile;
+
   renderProfile();
   closeProfileEditor();
   renderMyReports();
@@ -805,17 +1071,22 @@ $("#profileForm").addEventListener("submit", (event) => {
 /* PROFILE AVATAR */
 
 function openAvatarPicker() {
-  $("#avatarInput").click();
+  $("#avatarInput")?.click();
 }
 
-$("#profileAvatar").addEventListener("click", openAvatarPicker);
-$("#changeAvatarButton").addEventListener("click", openAvatarPicker);
+$("#profileAvatar")?.addEventListener("click", openAvatarPicker);
 
-$("#avatarInput").addEventListener("change", (event) => {
+$("#changeAvatarButton")?.addEventListener("click", openAvatarPicker);
+
+$("#avatarInput")?.addEventListener("change", (event) => {
   const file = event.target.files?.[0];
   if (!file) return;
 
-  const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
+  const allowedTypes = [
+    "image/jpeg",
+    "image/png",
+    "image/webp"
+  ];
 
   if (!allowedTypes.includes(file.type)) {
     showToast("Choose a JPG, PNG or WEBP image.");
@@ -849,11 +1120,14 @@ $("#avatarInput").addEventListener("change", (event) => {
     showToast("Profile photo updated.");
   };
 
-  reader.onerror = () => showToast("Could not read this photo.");
+  reader.onerror = () => {
+    showToast("Could not read this photo.");
+  };
+
   reader.readAsDataURL(file);
 });
 
-$("#removeAvatarButton").addEventListener("click", () => {
+$("#removeAvatarButton")?.addEventListener("click", () => {
   avatarData = "";
 
   try {
@@ -863,6 +1137,7 @@ $("#removeAvatarButton").addEventListener("click", () => {
   }
 
   $("#avatarInput").value = "";
+
   renderAvatar();
   showToast("Profile photo removed.");
 });
@@ -871,6 +1146,7 @@ $("#removeAvatarButton").addEventListener("click", () => {
 
 function renderMyReports() {
   const grid = $("#myReportsGrid");
+  if (!grid) return;
 
   const myReports = items.filter((item) =>
     item.reporterEmail &&
@@ -884,7 +1160,11 @@ function renderMyReports() {
     grid.appendChild(renderItemCard(item));
   });
 
-  $("#noMyReports").hidden = myReports.length > 0;
+  const emptyMessage = $("#noMyReports");
+
+  if (emptyMessage) {
+    emptyMessage.hidden = myReports.length > 0;
+  }
 }
 
 /* CHAT DEMO */
@@ -903,6 +1183,7 @@ function openChat(item) {
 
   $("#chatModal").hidden = false;
   document.body.classList.add("modal-open");
+
   $("#chatMessageInput").focus();
 }
 
@@ -914,6 +1195,8 @@ function closeChat() {
 
 function renderChatMessages() {
   const container = $("#chatMessages");
+  if (!container) return;
+
   container.replaceChildren();
 
   if (!activeChatItemId) return;
@@ -922,42 +1205,47 @@ function renderChatMessages() {
 
   if (messages.length === 0) {
     const empty = document.createElement("p");
+
     empty.className = "chat-empty";
-    empty.textContent =
-      "Start a conversation.";
+    empty.textContent = "Start a conversation.";
+
     container.appendChild(empty);
     return;
   }
 
   messages.forEach((message) => {
     const bubble = document.createElement("div");
+
     bubble.className =
       `chat-message ${message.sender === "me" ? "mine" : "theirs"}`;
+
     bubble.textContent = message.text;
+
     container.appendChild(bubble);
   });
 
   container.scrollTop = container.scrollHeight;
 }
 
-$("#closeChatButton").addEventListener("click", closeChat);
+$("#closeChatButton")?.addEventListener("click", closeChat);
 
-$("#chatModal").addEventListener("click", (event) => {
+$("#chatModal")?.addEventListener("click", (event) => {
   if (event.target === $("#chatModal")) {
     closeChat();
   }
 });
 
 document.addEventListener("keydown", (event) => {
-  if (event.key === "Escape" && !$("#chatModal").hidden) {
+  if (event.key === "Escape" && $("#chatModal") && !$("#chatModal").hidden) {
     closeChat();
   }
 });
 
-$("#chatForm").addEventListener("submit", (event) => {
+$("#chatForm")?.addEventListener("submit", (event) => {
   event.preventDefault();
 
   const text = $("#chatMessageInput").value.trim();
+
   if (!text || !activeChatItemId) return;
 
   const key = getChatKey(activeChatItemId);
@@ -979,15 +1267,19 @@ $("#chatForm").addEventListener("submit", (event) => {
   if (!saveStorage(STORAGE_KEYS.chats, updatedChats)) return;
 
   chats = updatedChats;
+
   $("#chatMessageInput").value = "";
+
   renderChatMessages();
 });
 
 /* INITIAL SETUP */
 
 function initialise() {
-  $("#itemDate").max = new Date().toISOString().slice(0, 10);
-  $("#itemDate").value = new Date().toISOString().slice(0, 10);
+  if ($("#itemDate")) {
+    $("#itemDate").max = new Date().toISOString().slice(0, 10);
+    $("#itemDate").value = new Date().toISOString().slice(0, 10);
+  }
 
   renderItems();
   renderProfile();
